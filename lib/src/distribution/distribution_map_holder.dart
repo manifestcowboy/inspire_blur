@@ -21,7 +21,9 @@ class DistributionMapHolder {
     required BuildContext context,
     required Distribution? distribution,
   }) {
-    final newSize = MediaQuery.of(context).size.longestSide;
+    // `sizeOf` (not `of`): a keyboard moving `viewInsets` would otherwise
+    // rebuild every blur on each frame of the animation.
+    final newSize = MediaQuery.sizeOf(context).longestSide;
 
     if (!_hasScreenSize || newSize != _screenLongestSide) {
       _screenLongestSide = newSize;

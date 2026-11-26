@@ -236,6 +236,10 @@ class InspireChildBlur extends StatelessWidget {
           aspectRatioCorrection: aspectRatioCorrection,
           direction: direction,
           sigma: sigma,
+          // MANIFEST B5 (vendor patch) · the imageFilter arm above is not
+          // wired: its texel is already a DEVICE px, so the sparse-step
+          // defect the options address does not exist there.
+          sampling: config.sampling,
           child: child,
         )
     };

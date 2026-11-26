@@ -1,3 +1,15 @@
+## 0.6.0
+
+### Added
+
+- **Band sampler** (`InspireChildBlurBandSampler`): blurs only the header and footer bands of a scrolling child, not the whole child.
+- **Reduced band** (`reducedScale`): the strong rows of the band are blurred at 1 px per logical px and drawn back up bilinearly. It is the fastest option tried, and it is shipped in Manifest on iPhone. A slow-scroll shimmer check over text and 1-px stripes found no more shimmer than at full resolution.
+- **Fast child shader** (`inspire_blur_child_fast.frag`): gives the same pixels for less GPU work.
+- **Bounded sampler and texture budget** (`InspireBoundedSampler`, `InspireProductionBudget`): cap GPU memory during long scrolls.
+- **Kernel sampling options** (`InspireKernelSampling`).
+
+The band sampler works with every distribution. It draws widget opacity as solid, and the fast shader has no aspect ratio correction, so a band with an `inside` fit or a widget opacity falls back to the regular child blur.
+
 ## 0.5.0
 
 ### Added

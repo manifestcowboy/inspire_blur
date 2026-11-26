@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:inspire_blur/src/distribution/blur_distribution.dart';
+import 'package:inspire_blur/src/distribution/distribution.dart';
 import 'package:inspire_blur/src/inspire_blur_config.dart';
 
 import 'test_core.dart';
@@ -8,53 +8,43 @@ import 'test_core.dart';
 void main() {
   InspireBlurConfig mockValidConfig() => InspireBlurConfig(
         sigma: 5,
-        distribution: DirectionalDistribution(
+        blurDistribution: DirectionalDistribution(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 1],
-          values: [0, 1],
         ),
       );
 
   test('Constructor accepts valid configs', () {
     final configWithSigma = InspireBlurConfig(
       sigma: 1,
-      distribution: DirectionalDistribution(
+      blurDistribution: DirectionalDistribution(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        stops: [0, 1],
-        values: [0, 1],
       ),
     );
 
     final configWithSigmaX = InspireBlurConfig(
       sigmaX: 2,
-      distribution: DirectionalDistribution(
+      blurDistribution: DirectionalDistribution(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        stops: [0, 1],
-        values: [0, 1],
       ),
     );
 
     final configWithSigmaY = InspireBlurConfig(
       sigmaY: 3,
-      distribution: DirectionalDistribution(
+      blurDistribution: DirectionalDistribution(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        stops: [0, 1],
-        values: [0, 1],
       ),
     );
 
     final configWithSigmaXY = InspireBlurConfig(
       sigmaX: 5,
       sigmaY: 8,
-      distribution: DirectionalDistribution(
+      blurDistribution: DirectionalDistribution(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        stops: [0, 1],
-        values: [0, 1],
       ),
     );
 
@@ -82,11 +72,9 @@ void main() {
   test('Constructor throws when no sigma provided', () {
     expect(
       () => InspireBlurConfig(
-        distribution: DirectionalDistribution(
+        blurDistribution: DirectionalDistribution(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 1],
-          values: [0, 1],
         ),
       ),
       throwsAssertionError,
@@ -99,11 +87,9 @@ void main() {
         sigma: 5,
         sigmaX: 5,
         sigmaY: 5,
-        distribution: DirectionalDistribution(
+        blurDistribution: DirectionalDistribution(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 1],
-          values: [0, 1],
         ),
       ),
       throwsAssertionError,
@@ -114,11 +100,9 @@ void main() {
     expect(
       () => InspireBlurConfig(
         sigma: 5,
-        distribution: DirectionalDistribution(
+        blurDistribution: DirectionalDistribution(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 1],
-          values: [0, 1],
         ),
       ).copyWith(
         sigmaX: 5,
@@ -133,11 +117,9 @@ void main() {
       () => InspireBlurConfig(
         sigma: 5,
         sigmaX: 5,
-        distribution: DirectionalDistribution(
+        blurDistribution: DirectionalDistribution(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 1],
-          values: [0, 1],
         ),
       ),
       throwsAssertionError,
@@ -148,11 +130,9 @@ void main() {
     expect(
       () => InspireBlurConfig(
         sigma: 5,
-        distribution: DirectionalDistribution(
+        blurDistribution: DirectionalDistribution(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 1],
-          values: [0, 1],
         ),
       ).copyWith(sigmaX: 5),
       throwsAssertionError,
@@ -164,11 +144,9 @@ void main() {
       () => InspireBlurConfig(
         sigma: 5,
         sigmaY: 5,
-        distribution: DirectionalDistribution(
+        blurDistribution: DirectionalDistribution(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 1],
-          values: [0, 1],
         ),
       ),
       throwsAssertionError,
@@ -179,11 +157,9 @@ void main() {
     expect(
       () => InspireBlurConfig(
         sigma: 5,
-        distribution: DirectionalDistribution(
+        blurDistribution: DirectionalDistribution(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 1],
-          values: [0, 1],
         ),
       ).copyWith(sigmaY: 5),
       throwsAssertionError,
@@ -267,15 +243,13 @@ void main() {
     expect(newConfig.sigma, equals(34));
     expect(newConfig.sigmaX, equals(originalConfig.sigmaX));
     expect(newConfig.sigmaY, equals(originalConfig.sigmaY));
-    expect(newConfig.distribution, equals(originalConfig.distribution));
+    expect(newConfig.blurDistribution, equals(originalConfig.blurDistribution));
   });
 
   test('No values are replaced by copyWith when nulls are passed', () {
     final config = InspireBlurConfig(
       sigma: 21,
-      distribution: DirectionalDistribution(
-        values: [0, 1],
-        stops: [0, 1],
+      blurDistribution: DirectionalDistribution(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ),
@@ -283,18 +257,16 @@ void main() {
     final copiedConfig = config.copyWith();
 
     expect(copiedConfig.sigma, equals(21));
-    expect(copiedConfig.distribution, equals(config.distribution));
+    expect(copiedConfig.blurDistribution, equals(config.blurDistribution));
   });
 
   test('copyWith throws when too many or no sigma provided', () {
     expect(
       () => InspireBlurConfig(
         sigma: 5,
-        distribution: DirectionalDistribution(
+        blurDistribution: DirectionalDistribution(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 1],
-          values: [0, 1],
         ),
       ).copyWith(sigmaX: 5),
       throwsAssertionError,
@@ -302,11 +274,9 @@ void main() {
     expect(
       () => InspireBlurConfig(
         sigma: 5,
-        distribution: DirectionalDistribution(
+        blurDistribution: DirectionalDistribution(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 1],
-          values: [0, 1],
         ),
       ).copyWith(sigmaY: 5),
       throwsAssertionError,
@@ -314,11 +284,9 @@ void main() {
     expect(
       () => InspireBlurConfig(
         sigmaX: 5,
-        distribution: DirectionalDistribution(
+        blurDistribution: DirectionalDistribution(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 1],
-          values: [0, 1],
         ),
       ).copyWith(sigma: 5),
       throwsAssertionError,
@@ -326,11 +294,9 @@ void main() {
     expect(
       () => InspireBlurConfig(
         sigmaY: 5,
-        distribution: DirectionalDistribution(
+        blurDistribution: DirectionalDistribution(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 1],
-          values: [0, 1],
         ),
       ).copyWith(sigma: 5),
       throwsAssertionError,
@@ -420,16 +386,16 @@ void main() {
     expect(config.sigmaX, null);
     expect(config.sigmaY, null);
 
-    final distribution = config.distribution as DirectionalDistribution;
+    final distribution = config.blurDistribution as DirectionalDistribution;
 
     expect(distribution.begin, Alignment.topCenter);
     expect(distribution.end, Alignment.bottomCenter);
-    expect(distribution.stops.first, 0.0);
-    expect(distribution.stops.last, 1.0);
-    expect(distribution.values.first, 1.0);
-    expect(distribution.values.last, 0.0);
-    expectIncreasing(distribution.stops);
-    expectDecreasing(distribution.values);
+    final samples = [
+      for (var i = 0; i <= 10; i++) distribution.progression.samplePoint(i / 10)
+    ];
+    expect(samples.first, 1.0);
+    expect(samples.last, 0.0);
+    expectDecreasing(samples);
   });
 
   test('bottomToTop produces correct config', () {
@@ -439,16 +405,16 @@ void main() {
     expect(config.sigmaX, null);
     expect(config.sigmaY, null);
 
-    final distribution = config.distribution as DirectionalDistribution;
+    final distribution = config.blurDistribution as DirectionalDistribution;
 
     expect(distribution.begin, Alignment.bottomCenter);
     expect(distribution.end, Alignment.topCenter);
-    expect(distribution.stops.first, 0.0);
-    expect(distribution.stops.last, 1.0);
-    expect(distribution.values.first, 1.0);
-    expect(distribution.values.last, 0.0);
-    expectIncreasing(distribution.stops);
-    expectDecreasing(distribution.values);
+    final samples = [
+      for (var i = 0; i <= 10; i++) distribution.progression.samplePoint(i / 10)
+    ];
+    expect(samples.first, 1.0);
+    expect(samples.last, 0.0);
+    expectDecreasing(samples);
   });
 
   test('leftToRight produces correct config', () {
@@ -458,16 +424,16 @@ void main() {
     expect(config.sigmaX, null);
     expect(config.sigmaY, null);
 
-    final distribution = config.distribution as DirectionalDistribution;
+    final distribution = config.blurDistribution as DirectionalDistribution;
 
     expect(distribution.begin, Alignment.centerLeft);
     expect(distribution.end, Alignment.centerRight);
-    expect(distribution.stops.first, 0.0);
-    expect(distribution.stops.last, 1.0);
-    expect(distribution.values.first, 1.0);
-    expect(distribution.values.last, 0.0);
-    expectIncreasing(distribution.stops);
-    expectDecreasing(distribution.values);
+    final samples = [
+      for (var i = 0; i <= 10; i++) distribution.progression.samplePoint(i / 10)
+    ];
+    expect(samples.first, 1.0);
+    expect(samples.last, 0.0);
+    expectDecreasing(samples);
   });
 
   test('rightToLeft produces correct config', () {
@@ -477,16 +443,16 @@ void main() {
     expect(config.sigmaX, null);
     expect(config.sigmaY, null);
 
-    final distribution = config.distribution as DirectionalDistribution;
+    final distribution = config.blurDistribution as DirectionalDistribution;
 
     expect(distribution.begin, Alignment.centerRight);
     expect(distribution.end, Alignment.centerLeft);
-    expect(distribution.stops.first, 0.0);
-    expect(distribution.stops.last, 1.0);
-    expect(distribution.values.first, 1.0);
-    expect(distribution.values.last, 0.0);
-    expectIncreasing(distribution.stops);
-    expectDecreasing(distribution.values);
+    final samples = [
+      for (var i = 0; i <= 10; i++) distribution.progression.samplePoint(i / 10)
+    ];
+    expect(samples.first, 1.0);
+    expect(samples.last, 0.0);
+    expectDecreasing(samples);
   });
 
   test('directional produces correct config', () {
@@ -500,16 +466,16 @@ void main() {
     expect(config.sigmaX, null);
     expect(config.sigmaY, null);
 
-    final distribution = config.distribution as DirectionalDistribution;
+    final distribution = config.blurDistribution as DirectionalDistribution;
 
     expect(distribution.begin, Alignment.topLeft);
     expect(distribution.end, Alignment.bottomRight);
-    expect(distribution.stops.first, 0.0);
-    expect(distribution.stops.last, 1.0);
-    expect(distribution.values.first, 1.0);
-    expect(distribution.values.last, 0.0);
-    expectIncreasing(distribution.stops);
-    expectDecreasing(distribution.values);
+    final samples = [
+      for (var i = 0; i <= 10; i++) distribution.progression.samplePoint(i / 10)
+    ];
+    expect(samples.first, 1.0);
+    expect(samples.last, 0.0);
+    expectDecreasing(samples);
   });
 
   test('uniform produces correct config', () {
@@ -519,74 +485,34 @@ void main() {
     expect(config.sigmaX, null);
     expect(config.sigmaY, null);
 
-    expect(config.distribution, isA<UniformDistribution>());
+    expect(config.blurDistribution, isA<UniformDistribution>());
   });
 
-  test('Throws when extent is outside [0,1] range', () {
+  test('Throws when fadeStart is after fadeEnd', () {
     expect(
-      () => InspireBlurConfig.topToBottom(extent: -0.1),
-      throwsAssertionError,
-    );
-    expect(
-      () => InspireBlurConfig.topToBottom(extent: 1.1),
-      throwsAssertionError,
-    );
-
-    expect(
-      () => InspireBlurConfig.bottomToTop(extent: -0.1),
-      throwsAssertionError,
-    );
-    expect(
-      () => InspireBlurConfig.bottomToTop(extent: 1.1),
-      throwsAssertionError,
-    );
-
-    expect(
-      () => InspireBlurConfig.leftToRight(extent: -0.1),
-      throwsAssertionError,
-    );
-    expect(
-      () => InspireBlurConfig.leftToRight(extent: 1.1),
-      throwsAssertionError,
-    );
-
-    expect(
-      () => InspireBlurConfig.rightToLeft(extent: -0.1),
-      throwsAssertionError,
-    );
-    expect(
-      () => InspireBlurConfig.rightToLeft(extent: 1.1),
-      throwsAssertionError,
-    );
-
-    expect(
-      () => InspireBlurConfig.directional(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        extent: -0.1,
-      ),
+      () => InspireBlurConfig.topToBottom(fadeStart: 0.6, fadeEnd: 0.4),
       throwsAssertionError,
     );
     expect(
       () => InspireBlurConfig.directional(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        extent: 1.1,
+        fadeStart: 0.6,
+        fadeEnd: 0.4,
       ),
       throwsAssertionError,
     );
   });
 
-  test('extent == 0 produces valid minimal gradient', () {
+  test('fadeEnd == 0 produces a hard edge at the start', () {
     final config = InspireBlurConfig.topToBottom(
       sigma: 5,
-      extent: 0.0,
+      fadeEnd: 0.0,
     );
 
-    final distribution = config.distribution as DirectionalDistribution;
+    final distribution = config.blurDistribution as DirectionalDistribution;
 
-    expect(distribution.stops, [0.0, 0.0]);
-    expect(distribution.values, [1.0, 0.0]);
-    expect(distribution.values.length, 2);
+    expect(distribution.progression.samplePoint(0.5), 0.0);
+    expect(distribution.progression.samplePoint(1.0), 0.0);
   });
 }

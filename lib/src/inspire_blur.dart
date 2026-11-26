@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:inspire_blur/src/child_blur/inspire_child_blur_band_sampler.dart';
 import 'package:inspire_blur/src/inspire_backdrop_blur.dart';
 import 'package:inspire_blur/src/inspire_blur_config.dart';
 import 'package:inspire_blur/src/inspire_blur_mode.dart';
@@ -87,6 +88,55 @@ class Inspire {
       clipBehavior: clipBehavior,
       useRepaintBoundary: useRepaintBoundary,
       layoutInvalidationKey: layoutInvalidationKey,
+      child: child,
+    );
+  }
+
+  /// BB27 · VENDOR DIVERGENCE 4, not in pub 0.4.0.
+  ///
+  /// Same effect as [childBlur] under `InspireBlurMode.animatedSampler`, with
+  /// one composition change: everything OUTSIDE the mask's non-zero rows is
+  /// composited into the real scene directly instead of through a texture round
+  /// trip, and the snapshot the shader reads is clipped to the band plus the
+  /// kernel's reach. It falls back to [childBlur] whenever a guard is unmet.
+  ///
+  /// BB37 · the band anchors to whichever edge the mask ramps FROM, read off
+  /// the gradient map rather than passed in — so this serves `MnScrollRamp`'s
+  /// top-anchored header ramp and `MnShaderFade`'s bottom-anchored frosted
+  /// footer alike, and a mask that blurs both edges falls back. It is the
+  /// SHIPPED composition for both; `MN_RAMP_MODE=animatedSampler` is the
+  /// opt-OUT. See `inspire_child_blur_band_sampler.dart`, `_audit/dpr3/bb27/`
+  /// and `_audit/dpr3/bb37/`.
+  ///
+  /// MANIFEST C1 · [exactInteriorFastPath] draws the band with the exact
+  /// interior fast path (`shaders/inspire_blur_child_fast.frag`): the same
+  /// pixels at less GPU work. Off by default here (pub's behaviour);
+  /// manifest_ui turns it on. See
+  /// [InspireChildBlurBandSampler.exactInteriorFastPath].
+  ///
+  /// MANIFEST R · [reducedScale] / [reducedMinSigma] run the band's strong
+  /// rows at reduced resolution. Off (null) by default; a developer Tune
+  /// option only. See [InspireChildBlurBandSampler.reducedScale].
+  static Widget childBlurBand({
+    required InspireBlurConfig config,
+    required Widget child,
+    Clip clipBehavior = Clip.antiAlias,
+    bool useRepaintBoundary = true,
+    Object? layoutInvalidationKey,
+    double realUnderlap = 0.0,
+    bool exactInteriorFastPath = false,
+    double? reducedScale,
+    double reducedMinSigma = 0.0,
+  }) {
+    return InspireChildBlurBandSampler(
+      config: config,
+      clipBehavior: clipBehavior,
+      useRepaintBoundary: useRepaintBoundary,
+      layoutInvalidationKey: layoutInvalidationKey,
+      realUnderlap: realUnderlap,
+      exactInteriorFastPath: exactInteriorFastPath,
+      reducedScale: reducedScale,
+      reducedMinSigma: reducedMinSigma,
       child: child,
     );
   }

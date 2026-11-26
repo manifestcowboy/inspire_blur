@@ -1,9 +1,10 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
-import 'package:flutter_shaders/flutter_shaders.dart';
+import 'package:inspire_blur/src/child_blur/inspire_bounded_sampler.dart';
 import 'package:inspire_blur/src/color_adjustment/blur_color_adjustment.dart';
 import 'package:inspire_blur/src/distribution/distribution_image.dart';
+import 'package:inspire_blur/src/inspire_blur_config.dart';
 import 'package:inspire_blur/src/inspire_shaders.dart';
 import 'package:inspire_blur/src/model/aspect_ratio_correction.dart';
 import 'package:inspire_blur/src/opacity/widget_opacity.dart';
@@ -22,6 +23,10 @@ class InspireChildBlurAnimatedSamplerPass extends StatefulWidget {
   final double sigma;
   final Widget child;
 
+  /// MANIFEST B5 (vendor patch) · shader floats 27-28. See
+  /// [InspireKernelSampling].
+  final InspireKernelSampling sampling;
+
   const InspireChildBlurAnimatedSamplerPass({
     super.key,
     required this.blurDistributionImage,
@@ -32,6 +37,7 @@ class InspireChildBlurAnimatedSamplerPass extends StatefulWidget {
     required this.aspectRatioCorrection,
     required this.direction,
     required this.sigma,
+    this.sampling = InspireKernelSampling.unit,
     required this.child,
   });
 
@@ -72,9 +78,33 @@ class _InspireChildBlurAnimatedSamplerPassState
     final shader = _shader;
     if (shader == null) return widget.child;
 
-    return AnimatedSampler(
+    // BB61 · vendor divergence 4e. `AnimatedSampler`'s layer calls
+    // `toImageSync` on the WHOLE child once per ancestor walk with no frame
+    // stamp and no ceiling — the unbounded producer BB59/BB60 bounded on the
+    // band path and never reached here, which is the path every band-sampler
+    // guard failure lands on. Same draw, same pixels, bounded.
+    return InspireBoundedSampler(
+      // BB62 (audit) · the pixel-deciding values behind the closure, so the
+      // layer's cross-frame stale/re-serve compare survives this widget
+      // rebuilding (a fresh closure) every scroll frame.
+      pixelKey: (
+        shader,
+        widget.blurDistributionImage,
+        widget.opacityDistributionImage,
+        widget.transform,
+        // No value equality on these two, so key on what reaches the shader.
+        widget.widgetOpacity.shaderOpacityType,
+        widget.widgetOpacity.shaderOpacityValue,
+        widget.colorAdjustment,
+        widget.aspectRatioCorrection.shaderAspectRatio,
+        widget.direction,
+        widget.sigma,
+        widget.sampling,
+      ),
       (image, size, canvas) {
-        final dpr = MediaQuery.of(context).devicePixelRatio;
+        // PATCHED vs pub 0.4.0 (PERF): `devicePixelRatioOf`, not `of(...)` -
+        // the keyboard must not rebuild this pass.
+        final dpr = MediaQuery.devicePixelRatioOf(context);
 
         final normalizedOrigin = widget.transform.origin.toNormalizedOffset();
 
@@ -118,7 +148,10 @@ class _InspireChildBlurAnimatedSamplerPassState
           ..setFloat(23, widget.colorAdjustment.nonBlurAdjustmentStrength)
           ..setFloat(24, widget.widgetOpacity.shaderOpacityType)
           ..setFloat(25, widget.widgetOpacity.shaderOpacityValue)
-          ..setFloat(26, widget.aspectRatioCorrection.shaderAspectRatio);
+          ..setFloat(26, widget.aspectRatioCorrection.shaderAspectRatio)
+          // MANIFEST B5 · the texel here is LOGICAL, so a device px is 1/dpr.
+          ..setFloat(27, widget.sampling.shaderMode)
+          ..setFloat(28, 1.0 / dpr);
         final paint = Paint()..shader = shader;
         canvas.drawRect(Offset.zero & size, paint);
       },

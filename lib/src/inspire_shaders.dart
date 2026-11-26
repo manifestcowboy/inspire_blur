@@ -13,6 +13,16 @@ class InspireShaders {
         'shaders/inspire_blur_child.frag',
       );
 
+  static Future<FragmentProgram?>? _childBlurExactInteriorFuture;
+
+  /// MANIFEST C1 · the child blur shader with the exact interior fast path
+  /// (`shaders/inspire_blur_child_fast.frag`), or `null` if it cannot be
+  /// loaded. Loaded only when a band sampler asks for it.
+  static Future<FragmentProgram?> get childBlurExactInterior =>
+      _childBlurExactInteriorFuture ??= _loadShader(
+        'shaders/inspire_blur_child_fast.frag',
+      );
+
   static Future<FragmentProgram?>? _backdropBlurFuture;
 
   /// Returns the backdrop blur shader, or `null` if it cannot be loaded.
@@ -39,6 +49,7 @@ class InspireShaders {
   @visibleForTesting
   static void reset() {
     _childBlurFuture = null;
+    _childBlurExactInteriorFuture = null;
     _backdropBlurFuture = null;
   }
 }
