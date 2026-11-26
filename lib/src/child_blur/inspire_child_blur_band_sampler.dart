@@ -6,11 +6,16 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:inspire_blur/src/child_blur/inspire_bounded_sampler.dart';
 import 'package:inspire_blur/src/color_adjustment/blur_color_adjustment.dart';
+import 'package:inspire_blur/src/distribution/distribution.dart';
 import 'package:inspire_blur/src/inspire_blur_config.dart';
 import 'package:inspire_blur/src/inspire_blur_mode.dart';
 import 'package:inspire_blur/src/inspire_blur_wrapper.dart';
 import 'package:inspire_blur/src/inspire_child_blur.dart';
 import 'package:inspire_blur/src/inspire_shaders.dart';
+import 'package:inspire_blur/src/model/aspect_ratio_correction.dart';
+import 'package:inspire_blur/src/model/distribution_fit.dart';
+import 'package:inspire_blur/src/model/inspire_blur_widget_type.dart';
+import 'package:inspire_blur/src/opacity/widget_opacity.dart';
 import 'package:inspire_blur/src/transform/blur_transform.dart';
 import 'package:inspire_blur/src/utils/extensions/inspire_geometry_extensions.dart';
 
@@ -774,6 +779,7 @@ class _InspireChildBlurBandSamplerState
     // `p19b_mask_swap_no_flash_test.dart`.
     return InspireBlurWrapper(
       config: widget.config,
+      widgetType: InspireBlurWidgetType.child,
       layoutInvalidationKey: widget.layoutInvalidationKey,
       builder: (BuildContext context, InspireBlurWrapperData data) {
         // MANIFEST C1 · the fast pair once it has loaded, else the default.
@@ -839,8 +845,21 @@ class _InspireChildBlurBandSamplerState
           _note('colorAdjustment active');
           return _fallback();
         }
+        // 0.6.0 · the band draws the widget fully opaque and with no aspect
+        // ratio correction (the fast program has neither), so anything else
+        // goes through the regular child blur.
+        if (widget.config.widgetOpacity is! SolidWidgetOpacity) {
+          _note('widgetOpacity not solid');
+          return _fallback();
+        }
+        if (widget.config.blurDistribution
+            case FittableDistribution(distributionFit: DistributionFit.inside)) {
+          _note('distributionFit inside');
+          return _fallback();
+        }
 
-        final ui.Image? gradientMap = data.blurGradientMap;
+        final ui.Image? gradientMap = data.blurDistributionImage?.image;
+        final ui.Image? opacityMap = data.opacityDistributionImage?.image;
 
         // Gradient map is not ready yet — skip a frame with no blur, exactly as
         // `InspireChildBlur` does. Only reachable before the FIRST map exists:
@@ -940,17 +959,27 @@ class _InspireChildBlurBandSamplerState
             ..setFloat(20, colorAdjustment.shaderSaturation)
             ..setFloat(21, colorAdjustment.shaderVibrance)
             ..setFloat(22, colorAdjustment.blurAdjustmentStrength)
-            ..setFloat(23, colorAdjustment.nonBlurAdjustmentStrength)
-            // MANIFEST B5 · kernel sampling; the texel is LOGICAL here, so a
-            // device px is 1/dpr. `unit` (0.0) is pub's loop.
-            ..setFloat(24, widget.config.sampling.shaderMode)
-            ..setFloat(25, 1.0 / dpr);
-          // MANIFEST C1 · the fast program's two opaque ones. The default
-          // program has no floats 26-27, so only the fast pair gets them.
+            ..setFloat(23, colorAdjustment.nonBlurAdjustmentStrength);
           if (fast) {
+            // MANIFEST C1 · the fast program keeps the 0.4.0 layout: B5
+            // kernel sampling at 24-25 (the texel is LOGICAL here, so a
+            // device px is 1/dpr; `unit` (0.0) is pub's loop), then its two
+            // opaque ones.
             shader
+              ..setFloat(24, widget.config.sampling.shaderMode)
+              ..setFloat(25, 1.0 / dpr)
               ..setFloat(26, debugInspireExactInteriorOneA)
               ..setFloat(27, 1.0);
+          } else {
+            // The default program (0.5.0 layout): solid widget opacity, no
+            // aspect ratio correction, then B5 kernel sampling at 27-28.
+            shader
+              ..setImageSampler(2, opacityMap ?? gradientMap)
+              ..setFloat(24, const WidgetOpacity.solid().shaderOpacityType)
+              ..setFloat(25, const WidgetOpacity.solid().shaderOpacityValue)
+              ..setFloat(26, const AspectRatioCorrection(null).shaderAspectRatio)
+              ..setFloat(27, widget.config.sampling.shaderMode)
+              ..setFloat(28, 1.0 / dpr);
           }
         }
 

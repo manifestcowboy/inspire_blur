@@ -84,9 +84,9 @@ Widget _host({bool compose = false}) {
           width: _kView.width,
           height: _kView.height,
           child: InspireChildBlurBandSampler(
-            config: InspireBlurConfig.bottomToTop(sigma: 20, extent: 0.2),
+            config: InspireBlurConfig.bottomToTop(sigma: 20, fadeEnd: 0.2),
             child: InspireChildBlurBandSampler(
-              config: InspireBlurConfig.topToBottom(sigma: 20, extent: 0.2),
+              config: InspireBlurConfig.topToBottom(sigma: 20, fadeEnd: 0.2),
               child: ColoredBox(
                 color: const Color(0xFF101010),
                 child: Column(

@@ -1,4 +1,4 @@
-## 0.4.0+manifest
+## 0.6.0
 
 ### Added
 
@@ -8,7 +8,62 @@
 - **Bounded sampler and texture budget** (`InspireBoundedSampler`, `InspireProductionBudget`): cap GPU memory during long scrolls.
 - **Kernel sampling options** (`InspireKernelSampling`).
 
-Based on 0.4.0. Not yet merged with 0.4.1.
+The band sampler works with every distribution. It draws widget opacity as solid, and the fast shader has no aspect ratio correction, so a band with an `inside` fit or a widget opacity falls back to the regular child blur.
+
+## 0.5.0
+
+### Added
+
+- **Implicitly animated widgets**
+  - Added widgets that automatically animate blur configuration changes: `AnimatedInspireChildBlur` and `AnimatedInspireBackdropBlur`.
+  - Animations can be customized using the `duration` and `curve` parameters.
+  - Animatable properties: `sigma` (`sigmaX`, `sigmaY`), `blurDistribution`, `transform`, `widgetOpacity`, and `colorAdjustment`.
+
+- **Widget opacity**
+  - Added opacity with multiple modes: semi-opaque, matching the blur distribution, or with fully custom distribution.
+  - Works with child blur widget.
+
+- **Distribution progressions**
+  - Added two types of distribution progression:
+    - `GradientProgression`: for regular gradient progressions between start and end points.
+    - `CustomProgression`: for advanced non-linear progressions.
+
+- **Combined distributions**
+  - Added `CombinedDistribution`, which allows multiple blur distributions to be rendered in a single Inspire Blur widget.
+  - Overlapping distributions are blended according to `DistributionBlend` (supports `max`, `sum`, and `screen` blends).
+  - Added the `InspireBlurConfig.edges` factory for any blurred edge combination in a single widget. It supports independent sigma values and progressions per edge.
+  - Added `strengthFactor` to distributions for scaling their contribution in `CombinedDistribution` (or in general).
+
+- **Aspect-ratio-preserving distributions**
+  - Added `square`, `roundedSquare`, and `circle` factories to `InspireBlurConfig`.
+  - Added `DistributionFit` enum (`fill`, `inside`) to preserve aspect ratio regardless of the target widget's dimensions.
+
+- **Performance & Shader Optimizations**
+  - Enabled linear interpolation of the distribution map in the shader, allowing lower map resolutions while maintaining visual quality.
+
+### Changed
+
+- **Breaking changes**
+  - Added `fadeStart` and replaced `extent` with `fadeEnd` in blur directional factories.
+  - Renamed `distribution` parameter to `blurDistribution` in `InspireBlurConfig`.
+  - Refactored `Distribution` into a generic spatial distribution abstraction applicable to properties beyond blur.
+  - `DirectionalDistribution`, `RRectDistribution`, and `EllipseDistribution` now use `progression` instead of `values` and `stops`. Wrap custom control points in a `CustomProgression` to migrate.
+
+- **Color adjustments**
+  - Fine-tuned the perceptual scale of color adjustments to produce smoother animations and more consistent results.
+
+- **Dependency cleanup**
+  - Removed all underlying dependencies on Flutter's Material and Cupertino libraries. (Thanks @Azzeccagarbugli!)
+
+## 0.4.1
+
+### Fixed
+
+- **Incorrect Y-orientation on Flutter 3.47**
+  - Migrated shaders to accommodate the Flutter breaking change where OpenGL ES render-to-texture content is now stored top-down.
+  - Backwards compatible with earlier Flutter versions.
+  - Applied to both child and backdrop blur.
+  - Thanks to @proninyaroslav and others for reporting and investigating this issue!
 
 ## 0.4.0
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inspire_blur/src/inspire_blur.dart';
 import 'package:inspire_blur/src/inspire_tint.dart';
+import 'package:inspire_blur/src/model/progression/progression.dart';
 
 void main() {
   const childKey = Key('child');
@@ -12,7 +13,7 @@ void main() {
       MaterialApp(
         home: Inspire.tint.topToBottom(
           color: Colors.black,
-          extent: 0.5,
+          fadeEnd: 0.5,
           opacity: 0.5,
           curve: Curves.linear,
           child: child,
@@ -25,14 +26,13 @@ void main() {
     expect(find.byKey(childKey), findsOneWidget);
   });
 
-  testWidgets('InspireTint returns child without decoration when extent <= 0',
+  testWidgets('InspireTint returns child without decoration when opacity <= 0',
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Inspire.tint.topToBottom(
           color: Colors.black,
-          extent: 0.0,
-          opacity: 0.5,
+          opacity: 0.0,
           curve: Curves.linear,
           child: child,
         ),
@@ -50,7 +50,7 @@ void main() {
       MaterialApp(
         home: Inspire.tint.topToBottom(
           color: Colors.black,
-          extent: 0.5,
+          fadeEnd: 0.5,
           opacity: 0.0,
           curve: Curves.linear,
           child: child,
@@ -76,7 +76,7 @@ void main() {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               color: color,
-              extent: extent,
+              fadeEnd: extent,
               opacity: opacity,
               curve: curve,
               child: child,
@@ -88,7 +88,7 @@ void main() {
         factoryName: 'topToBottom',
         factoryFunction: () => Inspire.tint.topToBottom(
               color: color,
-              extent: extent,
+              fadeEnd: extent,
               opacity: opacity,
               curve: curve,
               child: child,
@@ -100,7 +100,7 @@ void main() {
         factoryName: 'bottomToTop',
         factoryFunction: () => Inspire.tint.bottomToTop(
               color: color,
-              extent: extent,
+              fadeEnd: extent,
               opacity: opacity,
               curve: curve,
               child: child,
@@ -112,7 +112,7 @@ void main() {
         factoryName: 'leftToRight',
         factoryFunction: () => Inspire.tint.leftToRight(
               color: color,
-              extent: extent,
+              fadeEnd: extent,
               opacity: opacity,
               curve: curve,
               child: child,
@@ -124,7 +124,7 @@ void main() {
         factoryName: 'rightToLeft',
         factoryFunction: () => Inspire.tint.rightToLeft(
               color: color,
-              extent: extent,
+              fadeEnd: extent,
               opacity: opacity,
               curve: curve,
               child: child,
@@ -143,8 +143,9 @@ void main() {
         expect(widget.begin, c.begin);
         expect(widget.end, c.end);
         expect(widget.color, color);
-        expect(widget.curve, curve);
-        expect(widget.extent, extent);
+        final progression = widget.progression as GradientProgression;
+        expect(progression.curve, curve);
+        expect(progression.end, extent);
         expect(widget.opacity, opacity);
 
         expect(find.byKey(childKey), findsOneWidget);

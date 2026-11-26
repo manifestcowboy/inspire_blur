@@ -71,9 +71,9 @@ Widget _host() => MediaQuery(
             // sampler walks the inner one into its own snapshot scene as well
             // as into the real scene. One sampler is not the composition that
             // ships and it is not the one that measured 1194 productions.
-            config: InspireBlurConfig.bottomToTop(sigma: 20, extent: 0.2),
+            config: InspireBlurConfig.bottomToTop(sigma: 20, fadeEnd: 0.2),
             child: InspireChildBlurBandSampler(
-            config: InspireBlurConfig.topToBottom(sigma: 20, extent: 0.2),
+            config: InspireBlurConfig.topToBottom(sigma: 20, fadeEnd: 0.2),
             child: ColoredBox(
               color: const Color(0xFF000000),
               child: ListView(

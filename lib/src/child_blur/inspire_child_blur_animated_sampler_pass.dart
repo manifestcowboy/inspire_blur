@@ -3,28 +3,38 @@ import 'dart:ui' as ui;
 import 'package:flutter/widgets.dart';
 import 'package:inspire_blur/src/child_blur/inspire_bounded_sampler.dart';
 import 'package:inspire_blur/src/color_adjustment/blur_color_adjustment.dart';
+import 'package:inspire_blur/src/distribution/distribution_image.dart';
 import 'package:inspire_blur/src/inspire_blur_config.dart';
 import 'package:inspire_blur/src/inspire_shaders.dart';
+import 'package:inspire_blur/src/model/aspect_ratio_correction.dart';
+import 'package:inspire_blur/src/opacity/widget_opacity.dart';
 import 'package:inspire_blur/src/transform/blur_transform.dart';
 import 'package:inspire_blur/src/utils/extensions/inspire_geometry_extensions.dart';
+import 'package:inspire_blur/src/utils/inspire_shader_utils.dart';
 
 class InspireChildBlurAnimatedSamplerPass extends StatefulWidget {
-  final ui.Image gradientMap;
+  final DistributionImage blurDistributionImage;
+  final DistributionImage opacityDistributionImage;
   final BlurTransform transform;
+  final WidgetOpacity widgetOpacity;
   final BlurColorAdjustment colorAdjustment;
+  final AspectRatioCorrection aspectRatioCorrection;
   final Axis direction;
   final double sigma;
   final Widget child;
 
-  /// MANIFEST B5 (vendor patch) · shader floats 24-25. See
+  /// MANIFEST B5 (vendor patch) · shader floats 27-28. See
   /// [InspireKernelSampling].
   final InspireKernelSampling sampling;
 
   const InspireChildBlurAnimatedSamplerPass({
     super.key,
-    required this.gradientMap,
+    required this.blurDistributionImage,
+    required this.opacityDistributionImage,
     required this.transform,
+    required this.widgetOpacity,
     required this.colorAdjustment,
+    required this.aspectRatioCorrection,
     required this.direction,
     required this.sigma,
     this.sampling = InspireKernelSampling.unit,
@@ -79,9 +89,14 @@ class _InspireChildBlurAnimatedSamplerPassState
       // rebuilding (a fresh closure) every scroll frame.
       pixelKey: (
         shader,
-        widget.gradientMap,
+        widget.blurDistributionImage,
+        widget.opacityDistributionImage,
         widget.transform,
+        // No value equality on these two, so key on what reaches the shader.
+        widget.widgetOpacity.shaderOpacityType,
+        widget.widgetOpacity.shaderOpacityValue,
         widget.colorAdjustment,
+        widget.aspectRatioCorrection.shaderAspectRatio,
         widget.direction,
         widget.sigma,
         widget.sampling,
@@ -95,7 +110,16 @@ class _InspireChildBlurAnimatedSamplerPassState
 
         shader
           ..setImageSampler(0, image)
-          ..setImageSampler(1, widget.gradientMap)
+          ..setImageSampler(
+            1,
+            widget.blurDistributionImage.image,
+            filterQuality: kShaderMapSamplingQuality,
+          )
+          ..setImageSampler(
+            2,
+            widget.opacityDistributionImage.image,
+            filterQuality: kShaderMapSamplingQuality,
+          )
           ..setFloat(0, size.width)
           ..setFloat(1, size.height)
           // To ensure 1:1 effective blur strength with ImageFilter.shader
@@ -122,9 +146,12 @@ class _InspireChildBlurAnimatedSamplerPassState
           ..setFloat(21, widget.colorAdjustment.shaderVibrance)
           ..setFloat(22, widget.colorAdjustment.blurAdjustmentStrength)
           ..setFloat(23, widget.colorAdjustment.nonBlurAdjustmentStrength)
+          ..setFloat(24, widget.widgetOpacity.shaderOpacityType)
+          ..setFloat(25, widget.widgetOpacity.shaderOpacityValue)
+          ..setFloat(26, widget.aspectRatioCorrection.shaderAspectRatio)
           // MANIFEST B5 · the texel here is LOGICAL, so a device px is 1/dpr.
-          ..setFloat(24, widget.sampling.shaderMode)
-          ..setFloat(25, 1.0 / dpr);
+          ..setFloat(27, widget.sampling.shaderMode)
+          ..setFloat(28, 1.0 / dpr);
         final paint = Paint()..shader = shader;
         canvas.drawRect(Offset.zero & size, paint);
       },
