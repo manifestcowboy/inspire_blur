@@ -67,7 +67,13 @@ class _InspireBlurWrapperState extends State<InspireBlurWrapper> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    final newSize = MediaQuery.of(context).size.longestSide;
+    // PATCHED vs pub 0.4.0 (PERF, keyboard rebuild sweep): `MediaQuery.of`
+    // subscribes to every field, so each frame the keyboard moved `viewInsets`
+    // marked every wrapper dirty and rebuilt the whole band subtree under it
+    // (the header and the footer frost, on every screen). `sizeOf` is notified
+    // only when the window size changes: the same value, read on the same
+    // frames it ever changed.
+    final newSize = MediaQuery.sizeOf(context).longestSide;
 
     if (!_hasScreenSize || newSize != _screenLongestSide) {
       _screenLongestSide = newSize;

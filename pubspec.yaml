@@ -34,3 +34,4 @@ flutter:
   shaders:
     - shaders/inspire_blur_backdrop.frag
     - shaders/inspire_blur_child.frag
+    - shaders/inspire_blur_child_fast.frag

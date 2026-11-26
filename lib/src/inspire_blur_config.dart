@@ -6,6 +6,33 @@ import 'package:inspire_blur/src/distribution/blur_distribution.dart';
 import 'package:inspire_blur/src/transform/blur_transform.dart';
 import 'package:inspire_blur/src/utils/inspire_stops_generator.dart';
 
+/// MANIFEST B5 (vendor patch) · tap spacing of the child-blur kernel
+/// (`shaders/inspire_blur_child.frag`, floats 24-25).
+///
+/// The pub loop steps one TEXEL per tap. Under the sampler passes a texel is
+/// one LOGICAL px (3 device px at dpr 3), so a weak blur averages copies of
+/// the content 3 device px apart — the stepped, "pixelated" look of a header
+/// held at low scroll progress. The other values are the options Reo compares.
+enum InspireKernelSampling {
+  /// Pub's kernel: one tap per texel. Shader mode 0, today's pixels.
+  unit,
+
+  /// Step `clamp(sigma / 3, 1 device px, 1 texel)`: ~3 taps per sigma.
+  fineStep,
+
+  /// One tap per DEVICE px while sigma is under 12 device px.
+  denseTaps,
+
+  /// Sigma floored at 9 device px, faded in by `sigma / 9 device px`.
+  minSigma;
+
+  /// The value the shader's `u_sample_mode` reads.
+  double get shaderMode => index.toDouble();
+
+  /// Sigma (in DEVICE px) [minSigma] never runs the kernel below.
+  static const double minSigmaDevicePx = 9.0;
+}
+
 /// Defines how blur is applied, including strength and spatial [distribution].
 ///
 /// Allows for custom [transform] of the spatial distribution and
@@ -53,6 +80,10 @@ class InspireBlurConfig {
   /// Color adjustment of the blur effect.
   final BlurColorAdjustment colorAdjustment;
 
+  /// MANIFEST B5 (vendor patch) · how the child-blur kernel spaces its taps.
+  /// [InspireKernelSampling.unit] is pub's kernel, byte for byte.
+  final InspireKernelSampling sampling;
+
   /// Creates a blur configuration.
   ///
   /// To define blur strength, provide one of the following combinations:
@@ -71,6 +102,7 @@ class InspireBlurConfig {
     this.sigma,
     this.sigmaX,
     this.sigmaY,
+    this.sampling = InspireKernelSampling.unit,
   })  : assert(
           (sigma != null) ^ (sigmaX != null || sigmaY != null),
           'Provide either sigma OR at least one of sigmaX / sigmaY',
@@ -508,6 +540,7 @@ class InspireBlurConfig {
     BlurDistribution? distribution,
     BlurTransform? transform,
     BlurColorAdjustment? colorAdjustment,
+    InspireKernelSampling? sampling,
   }) {
     return InspireBlurConfig(
       sigma: sigma ?? this.sigma,
@@ -516,6 +549,7 @@ class InspireBlurConfig {
       distribution: distribution ?? this.distribution,
       transform: transform ?? this.transform,
       colorAdjustment: colorAdjustment ?? this.colorAdjustment,
+      sampling: sampling ?? this.sampling,
     );
   }
 
@@ -528,6 +562,7 @@ class InspireBlurConfig {
       distribution: distribution,
       transform: transform,
       colorAdjustment: colorAdjustment,
+      sampling: sampling,
     );
   }
 
@@ -540,6 +575,7 @@ class InspireBlurConfig {
       distribution: distribution,
       transform: transform,
       colorAdjustment: colorAdjustment,
+      sampling: sampling,
     );
   }
 
@@ -553,7 +589,8 @@ class InspireBlurConfig {
         other.sigmaY == sigmaY &&
         other.distribution == distribution &&
         other.transform == transform &&
-        other.colorAdjustment == colorAdjustment;
+        other.colorAdjustment == colorAdjustment &&
+        other.sampling == sampling;
   }
 
   @override
@@ -564,6 +601,7 @@ class InspireBlurConfig {
         distribution,
         transform,
         colorAdjustment,
+        sampling,
       );
 
   @override
